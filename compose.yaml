@@ -1,0 +1,75 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nutrium
+      POSTGRES_PASSWORD: nutrium
+      POSTGRES_DB: nutrium_development
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nutrium -d nutrium_development"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    image: nutrium-web
+    command: sh -c "bin/rails db:prepare && bin/rails server -b 0.0.0.0"
+    environment: &app_environment
+      POSTGRES_HOST: db
+      POSTGRES_USER: nutrium
+      POSTGRES_PASSWORD: nutrium
+      VITE_RUBY_HOST: vite
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 120s
+    depends_on:
+      db:
+        condition: service_healthy
+      vite:
+        condition: service_started
+
+  vite:
+    image: nutrium-web
+    command: bundle exec vite dev
+    environment:
+      VITE_RUBY_HOST: 0.0.0.0
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    ports:
+      - "3036:3036"
+
+  worker:
+    image: nutrium-web
+    command: bin/jobs
+    environment: *app_environment
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    depends_on:
+      web:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:v1.28
+    ports:
+      - "8025:8025"
+
+volumes:
+  postgres_data:
+  node_modules:

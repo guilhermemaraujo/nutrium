@@ -1,0 +1,29 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS", 5) %>
+  host: <%= ENV.fetch("POSTGRES_HOST", "localhost") %>
+  username: <%= ENV.fetch("POSTGRES_USER", "nutrium") %>
+  password: <%= ENV.fetch("POSTGRES_PASSWORD", "nutrium") %>
+
+development:
+  primary:
+    <<: *default
+    database: nutrium_development
+  queue:
+    <<: *default
+    database: nutrium_development_queue
+    migrations_paths: db/queue_migrate
+
+test:
+  <<: *default
+  database: nutrium_test
+
+production:
+  primary:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_DB", "nutrium_production") %>
+  queue:
+    <<: *default
+    database: <%= ENV.fetch("POSTGRES_QUEUE_DB", "nutrium_production_queue") %>
+    migrations_paths: db/queue_migrate
