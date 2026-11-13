@@ -1,0 +1,63 @@
+.card {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 303px;
+  gap: 50px;
+  min-height: 335px;
+  padding: 38px 42px;
+  border-radius: 4px;
+  background: white;
+}
+
+.avatar {
+  width: 88px;
+  height: 88px;
+}
+
+.serviceGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 3fr);
+  gap: 18px 32px;
+  margin-top: 28px;
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .card {
+    grid-template-columns: 64px minmax(0, 1fr) 180px;
+    gap: 20px;
+    padding: 24px;
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .serviceGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .card {
+    grid-template-columns: 64px minmax(0, 1fr);
+    gap: 14px;
+    min-height: 0;
+    padding: 23px 20px;
+  }
+
+  .avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .serviceGrid {
+    grid-template-columns: 1fr;
+    margin-top: 20px;
+  }
+
+  .actions {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+  }
+}

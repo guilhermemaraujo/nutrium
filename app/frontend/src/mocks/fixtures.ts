@@ -1,14 +1,11 @@
-import type {
-  AppointmentRequest,
-  Nutritionist,
-  SearchResponse,
-} from "@/api/types";
+import type { Nutritionist } from "@/api/types";
 
-export const mockNutritionists: Nutritionist[] = [
+const mockNutritionists: Nutritionist[] = [
   {
     id: 1,
     name: "Mary Jane",
     credential: "Dietitian",
+    registration_number: "2963N",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -35,6 +32,7 @@ export const mockNutritionists: Nutritionist[] = [
     id: 2,
     name: "Ana Costa",
     credential: "Nutritionist",
+    registration_number: "DEMO-002",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -57,21 +55,62 @@ export const mockNutritionists: Nutritionist[] = [
       },
     ],
   },
-];
-
-export const mockSearchResponse: SearchResponse = {
-  items: mockNutritionists,
-  meta: { page: 1, total_pages: 1, effective_location: "Braga" },
-};
-
-export const mockAppointmentRequests: AppointmentRequest[] = [
   {
-    id: 1,
-    nutritionist_id: 1,
-    service: mockNutritionists[0].services[0],
-    guest: { name: "Francisco Neves", email: "francisco@example.com" },
-    starts_at: "2027-01-21T09:30:00Z",
-    ends_at: "2027-01-21T10:30:00Z",
-    status: "pending",
+    id: 3,
+    name: "Beatriz Silva",
+    credential: "Nutritionist",
+    registration_number: "DEMO-003",
+    time_zone: "Europe/Lisbon",
+    services: [
+      {
+        id: 5,
+        nutritionist_id: 3,
+        name: "Sports nutrition",
+        price_cents: 3500,
+        duration_minutes: 50,
+        city: "Braga",
+        address: "Rua de São Victor 24",
+      },
+    ],
+  },
+  {
+    id: 4,
+    name: "João Pereira",
+    credential: "Dietitian",
+    registration_number: "DEMO-004",
+    time_zone: "Europe/Lisbon",
+    services: [
+      {
+        id: 6,
+        nutritionist_id: 4,
+        name: "Family nutrition",
+        price_cents: 3000,
+        duration_minutes: 45,
+        city: "Braga",
+        address: "Avenida Central 51",
+      },
+    ],
+  },
+  {
+    id: 5,
+    name: "Sofia Martins",
+    credential: "Nutritionist",
+    registration_number: "DEMO-005",
+    time_zone: "Europe/Lisbon",
+    services: [
+      {
+        id: 7,
+        nutritionist_id: 5,
+        name: "Weight management",
+        price_cents: 2900,
+        duration_minutes: 40,
+        city: "Braga",
+        address: "Rua Nova de Santa Cruz 15",
+      },
+    ],
   },
 ];
+
+export function createMockNutritionists(): Nutritionist[] {
+  return structuredClone(mockNutritionists);
+}

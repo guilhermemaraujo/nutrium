@@ -14,6 +14,7 @@ export interface Nutritionist {
   id: number;
   name: string;
   credential: string;
+  registration_number: string;
   time_zone: string;
   services: Service[];
 }

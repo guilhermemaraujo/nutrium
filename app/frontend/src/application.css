@@ -1,25 +1,32 @@
-:root {
-  font-family: Inter, system-ui, sans-serif;
-  color: #24443e;
-  background: #f7f8f8;
+@import "tailwindcss";
+
+@font-face {
+  font-family: Jost;
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("./assets/fonts/Jost-Variable.ttf") format("truetype");
 }
+
+:root {
+  font-family: Geomanist, Jost, Arial, Helvetica, sans-serif;
+  color: #263b3e;
+  background: #f8f8fa;
+}
+
 body {
   margin: 0;
 }
-.foundation {
-  max-width: 760px;
-  margin: 12vh auto;
-  padding: 2rem;
+
+button {
+  cursor: pointer;
 }
-.brand {
-  color: #28ad89;
-  font-weight: 800;
-  font-size: 1.5rem;
+
+button:disabled {
+  cursor: not-allowed;
 }
-h1 {
-  margin-top: 2rem;
-  font-size: clamp(2rem, 5vw, 3rem);
-}
-.note {
-  color: #6b7977;
+
+input,
+select {
+  outline-color: #2bb78f;
 }

@@ -1,14 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { MemoryRouter } from "react-router";
+import { afterEach, describe, it } from "vitest";
 
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 
 import { App } from "./App";
 
-describe("foundation app", () => {
-  it("renders the React entry point", () => {
-    render(<App />);
-    expect(
-      screen.getByRole("heading", { name: "Appointment requests" }),
-    ).toBeTruthy();
+afterEach(cleanup);
+
+describe("guest search routes", () => {
+  it("routes unknown paths to the not-found page and navigates home", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter initialEntries={["/requests"]}>
+        <App />
+      </MemoryRouter>,
+    );
+    screen.getByRole("heading", { name: "Page not found" });
+    await user.click(screen.getByRole("link", { name: "Back to search" }));
+    screen.getByRole("heading", { name: "Find your nutritionist" });
   });
 });

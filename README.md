@@ -4,7 +4,7 @@ Senior Full-Stack challenge implementation. The [challenge PDF](challenge-appoin
 
 ## What works today
 
-The application boots to a React foundation page. Nutritionist search, appointment booking, professional request decisions, notification emails, and searchable seed data are not implemented yet.
+The guest search page works with mock nutritionists and services. It supports name, service, and location search, Braga fallback, service details, and pagination. Booking and professional requests are not implemented yet; their API contracts are documented in the frontend types.
 
 ## Requirements
 
@@ -22,7 +22,7 @@ docker compose up --build -d
 docker compose ps
 ```
 
-The web service prepares the database before Rails starts. Open `http://localhost:3000` and confirm the **Appointment requests** heading appears. Use `docker compose logs -f web vite worker` to inspect service output, and `docker compose down` to stop the stack while retaining database data.
+The web service prepares the database before Rails starts. Open `http://localhost:3000` and confirm the **Find your nutritionist** heading appears. Use `docker compose logs -f web vite worker` to inspect service output, and `docker compose down` to stop the stack while retaining database data.
 
 Source files are bind mounted. Rails reloads code in development, and Vite updates the frontend in the browser when files change.
 

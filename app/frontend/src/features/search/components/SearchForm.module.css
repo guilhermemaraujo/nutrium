@@ -1,0 +1,39 @@
+.field {
+  width: 100%;
+  min-height: 62px;
+  border: 1px solid #d8dede;
+  border-radius: 3px;
+  background: white;
+  padding: 0.75rem 1.1rem;
+  box-shadow: 0 2px 5px rgba(17, 70, 61, 0.12);
+}
+
+.field::placeholder {
+  color: #aab2bb;
+}
+
+.field:focus {
+  border-color: #2ab78d;
+}
+
+.locationField {
+  padding-right: 3.5rem;
+}
+
+.submit {
+  min-height: 62px;
+  border-radius: 3px;
+  background: #e99874;
+  box-shadow: 0 2px 5px rgba(17, 70, 61, 0.11);
+}
+
+.submit:hover {
+  background: #df8964;
+}
+
+@media (max-width: 767px) {
+  .field,
+  .submit {
+    min-height: 51px;
+  }
+}
