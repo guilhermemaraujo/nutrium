@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -11,7 +11,12 @@ afterEach(cleanup);
 
 describe("nutritionist card", () => {
   it("shows professional details, location, and the selected service", () => {
-    render(<NutritionistCard person={createMockNutritionists()[0]} />);
+    render(
+      <NutritionistCard
+        person={createMockNutritionists()[0]}
+        onBook={vi.fn()}
+      />,
+    );
 
     const card = screen.getByRole("article");
     within(card).getByRole("heading", { name: "Mary Jane" });
@@ -28,7 +33,7 @@ describe("nutritionist card", () => {
     within(card).getByText("€25.00 · 60 min");
     expect(
       within(card).getByRole("button", { name: "Schedule appointment" }),
-    ).toHaveProperty("disabled", true);
+    ).toHaveProperty("disabled", false);
     within(card).getByRole("button", { name: "Website" });
   });
 
@@ -36,7 +41,8 @@ describe("nutritionist card", () => {
     const user = userEvent.setup();
     const person = createMockNutritionists()[0];
     person.services[1].address = "Rua de Santa Cruz 9";
-    render(<NutritionistCard person={person} />);
+    const onBook = vi.fn();
+    render(<NutritionistCard person={person} onBook={onBook} />);
 
     const card = screen.getByRole("article");
     const serviceSelect = within(card).getByRole("combobox", {
@@ -49,5 +55,9 @@ describe("nutritionist card", () => {
     within(card).getByText("Rua de Santa Cruz 9");
     expect(within(card).queryByText("€25.00 · 60 min")).toBeNull();
     expect(within(card).queryByText("Rua do Souto 12")).toBeNull();
+    await user.click(
+      within(card).getByRole("button", { name: "Schedule appointment" }),
+    );
+    expect(onBook).toHaveBeenCalledWith(person, 2);
   });
 });

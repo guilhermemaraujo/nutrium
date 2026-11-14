@@ -1,4 +1,4 @@
-import type { SearchResponse } from "@/api/types";
+import type { Nutritionist, SearchResponse } from "@/api/types";
 import type {
   SearchParams,
   SearchStatus,
@@ -13,6 +13,7 @@ interface SearchResultsProps {
   status: SearchStatus;
   onPageChange: (page: number) => void;
   onRetry: () => void;
+  onBook: (person: Nutritionist, serviceId: number) => void;
 }
 
 export function SearchResults({
@@ -21,6 +22,7 @@ export function SearchResults({
   status,
   onPageChange,
   onRetry,
+  onBook,
 }: SearchResultsProps) {
   const effectiveLocation = result?.meta.effective_location ?? "Braga";
   const fellBack =
@@ -76,7 +78,7 @@ export function SearchResults({
       {status === "success" && result && result.items.length > 0 && (
         <div className="grid gap-4 sm:gap-5">
           {result.items.map((person) => (
-            <NutritionistCard key={person.id} person={person} />
+            <NutritionistCard key={person.id} person={person} onBook={onBook} />
           ))}
         </div>
       )}

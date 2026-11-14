@@ -8,9 +8,10 @@ import styles from "./NutritionistCard.module.css";
 
 interface NutritionistCardProps {
   person: Nutritionist;
+  onBook: (person: Nutritionist, serviceId: number) => void;
 }
 
-export function NutritionistCard({ person }: NutritionistCardProps) {
+export function NutritionistCard({ person, onBook }: NutritionistCardProps) {
   const [selectedServiceId, setSelectedServiceId] = useState(
     person.services[0]?.id ?? 0,
   );
@@ -85,8 +86,8 @@ export function NutritionistCard({ person }: NutritionistCardProps) {
       <div className={`${styles.actions} flex flex-col gap-2`}>
         <button
           className="min-h-[42px] rounded-[2px] bg-[#f9e5e0] text-[0.88rem] text-[#e99775]"
-          disabled
-          title="Appointment requests are coming soon"
+          disabled={!selectedService}
+          onClick={() => selectedService && onBook(person, selectedService.id)}
         >
           Schedule appointment
         </button>
