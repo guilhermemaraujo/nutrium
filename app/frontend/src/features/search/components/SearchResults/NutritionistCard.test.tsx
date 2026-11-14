@@ -21,7 +21,7 @@ describe("nutritionist card", () => {
     const card = screen.getByRole("article");
     within(card).getByRole("heading", { name: "Mary Jane" });
     within(card).getByText("Dietitian · 2963N");
-    within(card).getByText("Online Follow-up");
+    within(card).getByText("In-person appointment");
     within(card).getByText("Rua do Souto 12");
     within(card).getByText("Braga");
 
@@ -59,5 +59,23 @@ describe("nutritionist card", () => {
       within(card).getByRole("button", { name: "Schedule appointment" }),
     );
     expect(onBook).toHaveBeenCalledWith(person, 2);
+  });
+
+  it("updates the consultation modality with the selected service", async () => {
+    const user = userEvent.setup();
+    render(
+      <NutritionistCard
+        person={createMockNutritionists()[1]}
+        onBook={vi.fn()}
+      />,
+    );
+    const card = screen.getByRole("article");
+    within(card).getByText("In-person appointment");
+    await user.selectOptions(
+      within(card).getByRole("combobox", { name: "Service for Ana Costa" }),
+      "4",
+    );
+    within(card).getByText("Online appointment");
+    expect(within(card).queryByText("In-person appointment")).toBeNull();
   });
 });

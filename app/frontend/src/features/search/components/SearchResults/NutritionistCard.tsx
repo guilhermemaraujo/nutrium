@@ -69,7 +69,11 @@ export function NutritionistCard({ person, onBook }: NutritionistCardProps) {
                     strokeWidth="1.7"
                   />
                 </svg>
-                <span>Online Follow-up</span>
+                <span>
+                  {selectedService.modality === "online"
+                    ? "Online appointment"
+                    : "In-person appointment"}
+                </span>
               </span>
               <span className="pl-[30px]">{selectedService.address}</span>
               <span className="pl-[30px]">{selectedService.city}</span>

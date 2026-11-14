@@ -1,4 +1,5 @@
 import type { Nutritionist } from "@/api/types";
+import { resolveLocalSlot } from "@/lib/localSlot";
 
 export interface BookingValues {
   service_id: number;
@@ -10,21 +11,6 @@ export interface BookingValues {
 
 export type BookingField = keyof BookingValues;
 export type BookingErrors = Partial<Record<BookingField, string>>;
-
-function localNow(timeZone: string): string {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(new Date());
-  const part = (type: string) =>
-    parts.find((item) => item.type === type)?.value ?? "";
-  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
-}
 
 export function validateBooking(
   values: BookingValues,
@@ -38,11 +24,16 @@ export function validateBooking(
     errors.email = "Enter a valid email address.";
   if (!values.date) errors.date = "Choose a date.";
   if (!values.time) errors.time = "Choose a time.";
-  if (
-    values.date &&
-    values.time &&
-    `${values.date}T${values.time}` <= localNow(person.time_zone)
-  )
-    errors.date = "Choose a future date and time.";
+  if (values.date && values.time) {
+    const slot = resolveLocalSlot(values.date, values.time, person.time_zone);
+    if (slot.kind === "invalid_date") errors.date = "Choose a valid date.";
+    if (slot.kind === "invalid_time") errors.time = "Choose a valid time.";
+    if (slot.kind === "nonexistent_time")
+      errors.time = "This local time does not exist. Choose another time.";
+    if (slot.kind === "ambiguous_time")
+      errors.time = "This local time occurs twice. Choose another time.";
+    if (slot.kind === "valid" && slot.startsAt.getTime() <= Date.now())
+      errors.date = "Choose a future date and time.";
+  }
   return errors;
 }

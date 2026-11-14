@@ -1,9 +1,11 @@
 export type RequestStatus = "pending" | "accepted" | "rejected" | "superseded";
+export type ConsultationModality = "online" | "in_person";
 
 export interface Service {
   id: number;
   nutritionist_id: number;
   name: string;
+  modality: ConsultationModality;
   price_cents: number;
   duration_minutes: number;
   city: string;
@@ -19,6 +21,16 @@ export interface Nutritionist {
   services: Service[];
 }
 
+export interface NutritionistOption {
+  id: number;
+  name: string;
+  time_zone: string;
+}
+
+export interface NutritionistOptionsResponse {
+  items: NutritionistOption[];
+}
+
 export interface SearchResponse {
   items: Nutritionist[];
   meta: { page: number; total_pages: number; effective_location: string };
@@ -32,7 +44,7 @@ export interface CreateAppointmentRequest {
 }
 
 export interface AppointmentRequest {
-  id: number;
+  id: string; // UUID
   nutritionist_id: number;
   service: Service;
   guest: { name: string; email: string };
