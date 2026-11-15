@@ -8,8 +8,8 @@ export interface Service {
   modality: ConsultationModality;
   price_cents: number;
   duration_minutes: number;
-  city: string;
-  address: string;
+  city: string | null;
+  address: string | null;
 }
 
 export interface Nutritionist {
@@ -34,6 +34,19 @@ export interface NutritionistOptionsResponse {
 export interface SearchResponse {
   items: Nutritionist[];
   meta: { page: number; total_pages: number; effective_location: string };
+}
+
+export interface AvailableSlot {
+  date: string; // YYYY-MM-DD in the nutritionist's time zone
+  time: string; // HH:mm in the nutritionist's time zone
+  starts_at: string; // ISO 8601 UTC
+  ends_at: string; // ISO 8601 UTC
+}
+
+export interface AvailableSlotsResponse {
+  time_zone: string; // IANA time zone
+  date: string; // YYYY-MM-DD in that time zone
+  items: AvailableSlot[];
 }
 
 export interface CreateAppointmentRequest {

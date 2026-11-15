@@ -1,0 +1,10 @@
+Hello <%= @request.guest.name %>,
+
+Your appointment request has been <%= @decision %>.
+
+Nutritionist: <%= @request.nutritionist.name %>
+Service: <%= @request.service_name %> (<%= @request.service_modality == "online" ? "online" : "in person" %>)
+When: <%= @local_start.strftime("%d %B %Y at %H:%M") %> (<%= @request.time_zone %>)
+<% if @request.service_modality == "in_person" %>
+Location: <%= @request.service_address %>, <%= @request.service_city %>
+<% end %>

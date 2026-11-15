@@ -1,4 +1,13 @@
 Rails.application.routes.draw do
+  namespace :api do
+    resources :nutritionists, only: :index do
+      get :options, on: :collection
+      get :available_slots, on: :member
+      resources :appointment_requests, only: [ :index, :update ], controller: "nutritionist_appointment_requests"
+    end
+    resources :appointment_requests, only: :create
+  end
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

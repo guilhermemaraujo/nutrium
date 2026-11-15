@@ -75,8 +75,12 @@ export function NutritionistCard({ person, onBook }: NutritionistCardProps) {
                     : "In-person appointment"}
                 </span>
               </span>
-              <span className="pl-[30px]">{selectedService.address}</span>
-              <span className="pl-[30px]">{selectedService.city}</span>
+              {selectedService.modality === "in_person" && (
+                <>
+                  <span className="pl-[30px]">{selectedService.address}</span>
+                  <span className="pl-[30px]">{selectedService.city}</span>
+                </>
+              )}
             </div>
             <ServiceSelector
               nutritionistName={person.name}

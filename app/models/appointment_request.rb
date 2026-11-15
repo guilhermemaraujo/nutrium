@@ -11,6 +11,7 @@ class AppointmentRequest < ApplicationRecord
   }, validate: true
 
   before_validation :capture_booking_details, on: :create
+  after_update_commit :enqueue_decision_email, if: :decision_status_changed?
 
   validates :starts_at, :ends_at, presence: true
   validates :service_name, :time_zone, presence: true
@@ -23,6 +24,14 @@ class AppointmentRequest < ApplicationRecord
   validate :time_zone_is_iana
 
   private
+
+  def decision_status_changed?
+    saved_change_to_status? && (accepted? || rejected?)
+  end
+
+  def enqueue_decision_email
+    AppointmentDecisionMailer.decision(id).deliver_later
+  end
 
   def capture_booking_details
     self.nutritionist ||= service&.nutritionist

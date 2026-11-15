@@ -14,7 +14,7 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "API and non-HTML paths do not use the client fallback" do
-    get "/api/nutritionists", headers: { "ACCEPT" => "text/html" }
+    get "/api/unknown", headers: { "ACCEPT" => "text/html" }
     assert_response :not_found
 
     get "/unknown", headers: { "ACCEPT" => "application/json" }

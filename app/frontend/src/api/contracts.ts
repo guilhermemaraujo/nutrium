@@ -2,6 +2,7 @@ import type {
   ApiError,
   AppointmentRequest,
   AppointmentRequestListResponse,
+  AvailableSlotsResponse,
   CreateAppointmentRequest,
   DecideAppointmentRequest,
   NutritionistOption,
@@ -21,6 +22,15 @@ export interface BookingApi {
   createAppointmentRequest(
     input: CreateAppointmentRequest,
   ): Promise<AppointmentRequest>;
+}
+
+export interface AvailabilityApi {
+  listAvailableSlots(
+    nutritionistId: number,
+    serviceId: number,
+    date: string,
+    signal?: AbortSignal,
+  ): Promise<AvailableSlotsResponse>;
 }
 
 export interface RequestsApi {

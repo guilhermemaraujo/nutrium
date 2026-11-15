@@ -1,10 +1,16 @@
 import {
   ApiRequestError,
+  type AvailabilityApi,
   type BookingApi,
   type RequestsApi,
   type SearchApi,
 } from "@/api/contracts";
-import type { ApiError, AppointmentRequest, Nutritionist } from "@/api/types";
+import type {
+  ApiError,
+  AppointmentRequest,
+  AvailableSlot,
+  Nutritionist,
+} from "@/api/types";
 import { resolveLocalSlot } from "@/lib/localSlot";
 
 import { createMockNutritionists } from "./fixtures";
@@ -28,7 +34,7 @@ const normalize = (value: string) => value.trim().toLocaleLowerCase();
 
 export function createMockApi(
   delayMs = 160,
-): SearchApi & BookingApi & RequestsApi {
+): SearchApi & BookingApi & RequestsApi & AvailabilityApi {
   const nutritionists = createMockNutritionists();
   const seededRequestId = (index: number) =>
     `00000000-0000-4000-8000-${index.toString(16).padStart(12, "0")}`;
@@ -94,12 +100,70 @@ export function createMockApi(
   const locations = [
     ...new Set(
       nutritionists.flatMap((person) =>
-        person.services.map((service) => service.city),
+        person.services
+          .map((service) => service.city)
+          .filter((city): city is string => city !== null),
       ),
     ),
   ];
 
   return {
+    async listAvailableSlots(nutritionistId, serviceId, date, signal) {
+      await wait(signal, delayMs);
+      const person = nutritionists.find((item) => item.id === nutritionistId);
+      if (!person) throw new ApiRequestError("Nutritionist not found.");
+      const service = person.services.find((item) => item.id === serviceId);
+      if (!service)
+        throw new ApiRequestError("Please correct the highlighted fields.", {
+          service_id: ["Choose a valid service."],
+        });
+      if (resolveLocalSlot(date, "12:00", person.time_zone).kind !== "valid")
+        throw new ApiRequestError("Please correct the highlighted fields.", {
+          date: ["Choose a valid date."],
+        });
+
+      const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+      const items: AvailableSlot[] = [];
+      if (weekday !== 0 && weekday !== 6) {
+        for (const [windowStart, windowEnd] of [
+          [9 * 60, 12 * 60 + 30],
+          [13 * 60 + 30, 17 * 60 + 30],
+        ]) {
+          for (
+            let minute = windowStart;
+            minute + service.duration_minutes <= windowEnd;
+            minute += 30
+          ) {
+            const time = `${String(Math.floor(minute / 60)).padStart(2, "0")}:${String(minute % 60).padStart(2, "0")}`;
+            const resolved = resolveLocalSlot(date, time, person.time_zone);
+            if (
+              resolved.kind !== "valid" ||
+              resolved.startsAt.getTime() <= Date.now()
+            )
+              continue;
+            const startsAt = resolved.startsAt.getTime();
+            const endsAt = startsAt + service.duration_minutes * 60_000;
+            if (
+              requests.some(
+                (request) =>
+                  request.nutritionist_id === nutritionistId &&
+                  request.status === "accepted" &&
+                  Date.parse(request.starts_at) < endsAt &&
+                  startsAt < Date.parse(request.ends_at),
+              )
+            )
+              continue;
+            items.push({
+              date,
+              time,
+              starts_at: new Date(startsAt).toISOString(),
+              ends_at: new Date(endsAt).toISOString(),
+            });
+          }
+        }
+      }
+      return structuredClone({ time_zone: person.time_zone, date, items });
+    },
     async listNutritionists(signal) {
       await wait(signal, delayMs);
       return nutritionists.map(({ id, name, time_zone }) => ({
@@ -229,7 +293,8 @@ export function createMockApi(
           ...person,
           services: person.services.filter(
             (service) =>
-              normalize(service.city) === normalize(effectiveLocation),
+              service.modality === "online" ||
+              normalize(service.city ?? "") === normalize(effectiveLocation),
           ),
         }))
         .filter(

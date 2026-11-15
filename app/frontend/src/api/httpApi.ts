@@ -1,5 +1,6 @@
 import {
   ApiRequestError,
+  type AvailabilityApi,
   type BookingApi,
   type RequestsApi,
   type SearchApi,
@@ -8,6 +9,7 @@ import type {
   ApiError,
   AppointmentRequest,
   AppointmentRequestListResponse,
+  AvailableSlotsResponse,
   NutritionistOptionsResponse,
   SearchResponse,
 } from "./types";
@@ -21,7 +23,18 @@ async function readJson<T>(response: Response, fallback: string): Promise<T> {
   return body;
 }
 
-export const httpApi: SearchApi & BookingApi & RequestsApi = {
+export const httpApi: SearchApi & BookingApi & RequestsApi & AvailabilityApi = {
+  async listAvailableSlots(nutritionistId, serviceId, date, signal) {
+    const params = new URLSearchParams({ service_id: String(serviceId), date });
+    const response = await fetch(
+      `/api/nutritionists/${nutritionistId}/available_slots?${params}`,
+      { headers: { Accept: "application/json" }, signal },
+    );
+    return readJson<AvailableSlotsResponse>(
+      response,
+      "Could not load available slots.",
+    );
+  },
   async listNutritionists(signal) {
     const response = await fetch("/api/nutritionists/options", {
       headers: { Accept: "application/json" },

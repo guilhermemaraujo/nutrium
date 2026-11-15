@@ -152,7 +152,111 @@ describe("mock requests API", () => {
   });
 });
 
+describe("mock availability API", () => {
+  it("returns local half-hour starts and UTC instants without blocking pending requests", async () => {
+    const mock = createMockApi(0);
+    const result = await mock.listAvailableSlots(1, 1, "2099-06-22");
+
+    expect(result).toMatchObject({
+      time_zone: "Europe/Lisbon",
+      date: "2099-06-22",
+    });
+    expect(result.items[0]).toEqual({
+      date: "2099-06-22",
+      time: "09:00",
+      starts_at: "2099-06-22T08:00:00.000Z",
+      ends_at: "2099-06-22T09:00:00.000Z",
+    });
+    expect(result.items.map((slot) => slot.time)).toContain("10:00");
+    expect(
+      result.items.every(
+        (slot) => slot.time.endsWith(":00") || slot.time.endsWith(":30"),
+      ),
+    ).toBe(true);
+
+    result.items[0].time = "changed";
+    expect(
+      (await mock.listAvailableSlots(1, 1, "2099-06-22")).items[0].time,
+    ).toBe("09:00");
+
+    const fortyFiveMinuteSlots = await mock.listAvailableSlots(
+      2,
+      3,
+      "2099-06-22",
+    );
+    expect(
+      fortyFiveMinuteSlots.items.slice(0, 2).map((slot) => slot.time),
+    ).toEqual(["09:00", "09:30"]);
+  });
+
+  it("excludes accepted overlaps across services while keeping adjacent slots", async () => {
+    const mock = createMockApi(0);
+    const mondayRequest = (await mock.listAppointmentRequests(1)).items.find(
+      (request) => request.starts_at.startsWith("2099-06-22"),
+    )!;
+    await mock.decideAppointmentRequest(1, mondayRequest.id, {
+      decision: "accept",
+    });
+
+    const times = (await mock.listAvailableSlots(1, 2, "2099-06-22")).items.map(
+      (slot) => slot.time,
+    );
+    expect(times).toContain("09:30");
+    expect(times).not.toContain("10:00");
+    expect(times).not.toContain("10:30");
+    expect(times).toContain("11:00");
+  });
+
+  it("rejects invalid service or date and returns no weekend slots", async () => {
+    const mock = createMockApi(0);
+    await expect(
+      mock.listAvailableSlots(1, 999, "2099-06-22"),
+    ).rejects.toMatchObject({
+      fields: { service_id: ["Choose a valid service."] },
+    });
+    await expect(
+      mock.listAvailableSlots(1, 1, "2099-02-30"),
+    ).rejects.toMatchObject({
+      fields: { date: ["Choose a valid date."] },
+    });
+    await expect(
+      mock.listAvailableSlots(1, 1, "2099-06-20"),
+    ).resolves.toMatchObject({
+      items: [],
+    });
+  });
+});
+
 describe("HTTP requests API", () => {
+  it("requests available slots with the service, local date, and abort signal", async () => {
+    const slots = {
+      time_zone: "Europe/Lisbon",
+      date: "2099-06-22",
+      items: [
+        {
+          date: "2099-06-22",
+          time: "09:00",
+          starts_at: "2099-06-22T08:00:00Z",
+          ends_at: "2099-06-22T08:45:00Z",
+        },
+      ],
+    };
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => slots,
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+
+    await expect(
+      httpApi.listAvailableSlots(1, 3, "2099-06-22", controller.signal),
+    ).resolves.toEqual(slots);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/nutritionists/1/available_slots?service_id=3&date=2099-06-22",
+      { headers: { Accept: "application/json" }, signal: controller.signal },
+    );
+  });
+
   it("loads unfiltered professional options from a dedicated endpoint", async () => {
     const options = [
       { id: 1, name: "Mary Jane", time_zone: "Europe/Lisbon" },
