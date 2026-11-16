@@ -2,6 +2,12 @@
 
 A Rails and React implementation of the [appointment requests challenge](challenge-appointment-requests.pdf). Guests can search nutritionists by name, service, and location, inspect services, and request an available appointment. A professional demo dashboard lists pending requests and lets a selected nutritionist accept or reject them. Decisions send guest emails to Mailpit.
 
+## Quick demo
+
+Watch a short walkthrough of the guest search, appointment booking, and professional request management experience.
+
+https://github.com/user-attachments/assets/c15cbcd1-a892-430c-a707-c3839993c21b
+
 ## Requirements and startup
 
 The application uses Ruby on Rails 7.2, PostgreSQL 16, React/TypeScript, Vite, and Tailwind CSS. Install Docker Desktop with Docker Compose and make ports **3000**, **3036**, and **8025** available. Ruby, Node, and PostgreSQL are installed in the containers; they are not required on the host for normal use.
