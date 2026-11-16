@@ -7,6 +7,12 @@ class PagesControllerTest < ActionDispatch::IntegrationTest
     assert_select "#root"
   end
 
+  test "requests page serves the React mount on a direct visit" do
+    get "/requests"
+    assert_response :success
+    assert_select "#root"
+  end
+
   test "unknown HTML paths serve the React not-found page with a 404" do
     get "/unknown/nested"
     assert_response :not_found
