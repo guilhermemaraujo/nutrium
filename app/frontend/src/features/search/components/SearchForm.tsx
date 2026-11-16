@@ -44,9 +44,9 @@ export function SearchForm({ onSearch }: SearchFormProps) {
         />
         <button
           type="button"
+          disabled
           className="absolute inset-y-0 right-0 grid w-12 place-items-center text-emerald-600"
           aria-label="Use current location (unavailable)"
-          aria-disabled="true"
           title="Current location is not available yet"
         >
           <svg

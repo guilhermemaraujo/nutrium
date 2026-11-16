@@ -24,6 +24,7 @@ describe("nutritionist card", () => {
     within(card).getByText("In-person appointment");
     within(card).getByText("Rua do Souto 12");
     within(card).getByText("Braga");
+    within(card).getByText(/FOLLOW-UP/);
 
     const serviceSelect = within(card).getByRole("combobox", {
       name: "Service for Mary Jane",
@@ -36,7 +37,9 @@ describe("nutritionist card", () => {
     expect(
       within(card).getByRole("button", { name: "Schedule appointment" }),
     ).toHaveProperty("disabled", false);
-    within(card).getByRole("button", { name: "Website" });
+    expect(
+      within(card).getByRole("button", { name: "Website" }),
+    ).toHaveProperty("disabled", true);
   });
 
   it("updates price, duration, and location when a service is selected", async () => {
@@ -80,5 +83,18 @@ describe("nutritionist card", () => {
     );
     within(card).getByText("Online appointment");
     expect(within(card).queryByText("In-person appointment")).toBeNull();
+  });
+
+  it("shows an informational follow-up badge only for listed follow-up services", () => {
+    const people = createMockNutritionists();
+    const { rerender } = render(
+      <NutritionistCard person={people[1]} onBook={vi.fn()} />,
+    );
+    expect(screen.queryByText(/FOLLOW-UP/)).toBeNull();
+    expect(screen.queryByText("NUTRITIONIST")).toBeNull();
+
+    rerender(<NutritionistCard person={people[2]} onBook={vi.fn()} />);
+    expect(screen.getByText(/FOLLOW-UP/).tagName).toBe("SPAN");
+    expect(screen.queryByRole("button", { name: /FOLLOW-UP/ })).toBeNull();
   });
 });

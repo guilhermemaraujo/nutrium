@@ -23,6 +23,9 @@ export function NutritionistCard({ person, onBook }: NutritionistCardProps) {
     .map((part) => part[0])
     .slice(0, 2)
     .join("");
+  const offersFollowUp = person.services.some((service) =>
+    /\bfollow[\s-]?up\b/i.test(service.name),
+  );
 
   return (
     <article className={styles.card}>
@@ -33,13 +36,14 @@ export function NutritionistCard({ person, onBook }: NutritionistCardProps) {
         {initials}
       </div>
       <div className="min-w-0">
-        <span className="inline-block rounded-full bg-[#dff9ef] px-[10px] py-[5px] text-[0.66rem] leading-none font-bold text-[#29b795]">
-          ☆{" "}
-          {person.services.some((service) => service.name === "Follow-up")
-            ? "FOLLOW-UP"
-            : "NUTRITIONIST"}
-        </span>
-        <h3 className="mt-1 text-xl font-semibold leading-tight text-[#29b795]">
+        {offersFollowUp && (
+          <span className="inline-block rounded-full bg-[#dff9ef] px-[10px] py-[5px] text-[0.66rem] leading-none font-bold text-[#29b795]">
+            ☆ FOLLOW-UP
+          </span>
+        )}
+        <h3
+          className={`${offersFollowUp ? "mt-1" : ""} text-xl font-semibold leading-tight text-[#29b795]`}
+        >
           {person.name}
         </h3>
         <p className="mt-1 text-sm text-[#7d858c]">
