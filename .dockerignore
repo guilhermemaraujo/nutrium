@@ -33,6 +33,9 @@
 
 # Ignore assets.
 /node_modules/
+/app/frontend/node_modules/
+/playwright-report/
+/test-results/
 /app/assets/builds/*
 !/app/assets/builds/.keep
 /public/assets

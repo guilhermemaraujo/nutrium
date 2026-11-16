@@ -33,7 +33,10 @@
 /public/vite/
 /public/vite-dev/
 /public/vite-test/
-/node_modules/
+node_modules/
+/playwright-report/
+/test-results/
 
 # Ignore master key for decrypting credentials and more.
 /config/master.key
+/config/credentials/*.key
