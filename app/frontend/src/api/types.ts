@@ -49,6 +49,12 @@ export interface AvailableSlotsResponse {
   items: AvailableSlot[];
 }
 
+export interface AvailableDatesResponse {
+  time_zone: string; // IANA time zone
+  month: string; // YYYY-MM in that time zone
+  dates: string[]; // YYYY-MM-DD with at least one available slot
+}
+
 export interface CreateAppointmentRequest {
   service_id: number;
   guest: { name: string; email: string };

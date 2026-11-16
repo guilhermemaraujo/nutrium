@@ -45,8 +45,23 @@ module Api
       service = nutritionist.services.find_by(id: params[:service_id])
       return invalid({ service_id: [ "Choose a valid service." ] }) unless service
 
+      if params.key?(:date) && params.key?(:month)
+        return invalid({ date: [ "Choose either a date or a month." ], month: [ "Choose either a date or a month." ] })
+      end
+      unless params.key?(:date) || params.key?(:month)
+        return invalid({ date: [ "Choose a date or month." ], month: [ "Choose a date or month." ] })
+      end
+
+      if params.key?(:month)
+        availability = AppointmentMonthAvailability.new(service: service, month: params[:month])
+        return render json: { time_zone: availability.time_zone_name, month: availability.month,
+          dates: availability.dates }
+      end
+
       slots = AppointmentSlots.new(service: service, date: params[:date])
       render json: { time_zone: slots.time_zone_name, date: slots.date.iso8601, items: slots.slots }
+    rescue AppointmentMonthAvailability::InvalidMonth
+      invalid({ month: [ "Choose a valid month." ] })
     rescue AppointmentSlots::InvalidDate
       invalid({ date: [ "Choose a valid date." ] })
     end

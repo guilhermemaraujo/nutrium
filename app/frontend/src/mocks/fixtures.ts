@@ -5,7 +5,7 @@ const mockNutritionists: Nutritionist[] = [
     id: 1,
     name: "Mary Jane",
     credential: "Dietitian",
-    registration_number: "2963N",
+    registration_number: "DEMO-REG-001",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -17,6 +17,16 @@ const mockNutritionists: Nutritionist[] = [
         duration_minutes: 60,
         city: "Braga",
         address: "Rua do Souto 12",
+      },
+      {
+        id: 9,
+        nutritionist_id: 1,
+        name: "First appointment",
+        modality: "online",
+        price_cents: 2300,
+        duration_minutes: 60,
+        city: null,
+        address: null,
       },
       {
         id: 2,
@@ -34,7 +44,7 @@ const mockNutritionists: Nutritionist[] = [
     id: 2,
     name: "Ana Costa",
     credential: "Nutritionist",
-    registration_number: "DEMO-002",
+    registration_number: "DEMO-REG-002",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -50,7 +60,7 @@ const mockNutritionists: Nutritionist[] = [
       {
         id: 4,
         nutritionist_id: 2,
-        name: "Online consultation",
+        name: "Nutrition consultation",
         modality: "online",
         price_cents: 2800,
         duration_minutes: 45,
@@ -62,8 +72,8 @@ const mockNutritionists: Nutritionist[] = [
   {
     id: 3,
     name: "Beatriz Silva",
-    credential: "Nutritionist",
-    registration_number: "DEMO-003",
+    credential: "Sports Nutritionist",
+    registration_number: "DEMO-REG-003",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -92,7 +102,7 @@ const mockNutritionists: Nutritionist[] = [
     id: 4,
     name: "João Pereira",
     credential: "Dietitian",
-    registration_number: "DEMO-004",
+    registration_number: "DEMO-REG-004",
     time_zone: "Europe/Lisbon",
     services: [
       {
@@ -111,7 +121,7 @@ const mockNutritionists: Nutritionist[] = [
     id: 5,
     name: "Sofia Martins",
     credential: "Nutritionist",
-    registration_number: "DEMO-005",
+    registration_number: "DEMO-REG-005",
     time_zone: "Europe/Lisbon",
     services: [
       {

@@ -64,13 +64,13 @@ describe("nutritionist requests dashboard", () => {
     const card = alex.closest("article")!;
     within(card).getByText("First appointment");
     within(card).getByText("In-person appointment");
-    within(card).getByText("20 June 2099");
+    within(card).getByText("22 June 2099");
     within(card).getByText("10:00");
     await user.selectOptions(selector, "2");
     await screen.findByRole("heading", { name: "Casey Lee" });
     const jordan = await screen.findByRole("heading", { name: "Jordan Reed" });
     within(jordan.closest("article")!).getByText("Online appointment");
-    within(jordan.closest("article")!).getByText("Online consultation");
+    within(jordan.closest("article")!).getByText("Nutrition consultation");
     expect(screen.queryByRole("heading", { name: "Alex Morgan" })).toBeNull();
   });
 

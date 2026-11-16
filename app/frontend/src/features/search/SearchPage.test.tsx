@@ -88,7 +88,7 @@ describe("guest search", () => {
 
     await user.type(
       screen.getByRole("textbox", { name: "Name or service" }),
-      "Online consultation",
+      "Nutrition consultation",
     );
     await user.type(screen.getByRole("textbox", { name: "Location" }), "Porto");
     await user.click(screen.getByRole("button", { name: "Search" }));
@@ -178,7 +178,7 @@ describe("guest search", () => {
 
     await user.type(
       screen.getByRole("textbox", { name: "Name or service" }),
-      "Online consultation",
+      "Nutrition consultation",
     );
     await user.type(screen.getByRole("textbox", { name: "Location" }), "Porto");
     search.mockRejectedValueOnce(new Error("offline"));
@@ -201,8 +201,8 @@ describe("guest search", () => {
         page,
       })),
     ).toEqual([
-      { query: "Online consultation", location: "Porto", page: 1 },
-      { query: "Online consultation", location: "Porto", page: 1 },
+      { query: "Nutrition consultation", location: "Porto", page: 1 },
+      { query: "Nutrition consultation", location: "Porto", page: 1 },
     ]);
   });
 });

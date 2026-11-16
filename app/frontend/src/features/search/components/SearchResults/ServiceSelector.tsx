@@ -53,7 +53,8 @@ export function ServiceSelector({
           >
             {services.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name}
+                {service.name} ·{" "}
+                {service.modality === "online" ? "Online" : "In person"}
               </option>
             ))}
           </select>

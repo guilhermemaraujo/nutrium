@@ -19,4 +19,4 @@ export { httpApi } from "./httpApi";
 export { createMockApi } from "@/mocks/createMockApi";
 
 export const api: SearchApi & BookingApi & RequestsApi & AvailabilityApi =
-  import.meta.env.VITE_API_MODE === "http" ? httpApi : createMockApi();
+  import.meta.env.VITE_API_MODE === "mock" ? createMockApi() : httpApi;

@@ -218,7 +218,7 @@ class AppointmentRequestDatabaseTest < ActiveSupport::TestCase
     request = AppointmentRequest.find_by!(guest: @first_guest)
     request.update!(status: "rejected")
     morning = @nutritionist.availability_windows.find_by!(weekday: 1, start_minute: 9 * 60)
-    morning.update!(end_minute: 12 * 60)
+    morning.update!(end_minute: 11 * 60 + 30)
 
     load Rails.root.join("db/seeds.rb").to_s
     assert_equal counts, [ Nutritionist.count, Service.count, Guest.count, AppointmentRequest.count, AvailabilityWindow.count ]
@@ -226,9 +226,10 @@ class AppointmentRequestDatabaseTest < ActiveSupport::TestCase
     assert_equal 2600, @first_service.reload.price_cents
     assert_equal "Alex", @first_guest.reload.name
     assert_equal "rejected", request.reload.status
-    assert_equal 12 * 60, morning.reload.end_minute
+    assert_equal 11 * 60 + 30, morning.reload.end_minute
     assert_equal 2, Service.where(nutritionist: Nutritionist.find_by!(registration_number: "DEMO-REG-002"), name: "Nutrition consultation").count
-    assert_equal 6, AppointmentRequest.count
+    assert_equal 7, AppointmentRequest.count
+    assert_equal 1, AppointmentRequest.accepted.count
   end
 
   test "seeded requests fit weekday local availability and retain a pending overlap" do
@@ -251,6 +252,19 @@ class AppointmentRequestDatabaseTest < ActiveSupport::TestCase
     assert_equal mary, alex.nutritionist
     assert_equal mary, sam.nutritionist
     assert alex.starts_at < sam.ends_at && sam.starts_at < alex.ends_at
+    assert_equal 6, AppointmentRequest.pending.count
+    accepted = AppointmentRequest.accepted.find_by!(guest: Guest.find_by!(email: "demo-accepted@example.com"))
+    assert_equal mary, accepted.nutritionist
+    assert_equal "2099-06-22T14:00:00Z", accepted.starts_at.utc.iso8601
+    monday = AppointmentSlots.new(service: accepted.service, date: "2099-06-22").slots.map { |slot| slot[:time] }
+    assert_includes monday, "14:00"
+    refute_includes monday, "15:00"
+    assert_includes monday, "16:00"
+
+    schedules = Nutritionist.where(registration_number: %w[DEMO-REG-001 DEMO-REG-002 DEMO-REG-003 DEMO-REG-004 DEMO-REG-005])
+      .map { |person| person.availability_windows.order(:weekday, :start_minute).pluck(:weekday, :start_minute, :end_minute) }
+    assert_equal 5, schedules.uniq.length
+    assert schedules.any? { |windows| windows.any? { |weekday,| weekday == 6 } }
   end
 
   private

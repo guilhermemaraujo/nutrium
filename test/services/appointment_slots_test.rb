@@ -55,4 +55,45 @@ class AppointmentSlotsTest < ActiveSupport::TestCase
     assert_equal %w[23:00 23:30], slots.map { |slot| slot[:time] }
     assert_empty AppointmentSlots.new(service: @service, date: "2020-06-22").slots
   end
+
+  test "monthly dates reuse daily duration and accepted-overlap rules" do
+    @nutritionist.availability_windows.create!(weekday: 1, start_minute: 9 * 60, end_minute: 10 * 60)
+    @nutritionist.availability_windows.create!(weekday: 2, start_minute: 9 * 60, end_minute: 9 * 60 + 30)
+    guest = Guest.create!(name: "Accepted", email: "monthly-#{SecureRandom.hex(5)}@example.com")
+    other_service = @nutritionist.services.create!(name: "Short", modality: :online,
+      price_cents: 1800, duration_minutes: 30)
+
+    month = AppointmentMonthAvailability.new(service: @service, month: "2099-06")
+    assert_includes month.dates, "2099-06-22"
+    refute_includes month.dates, "2099-06-23"
+
+    AppointmentRequest.create!(guest: guest, service: other_service,
+      starts_at: Time.utc(2099, 6, 22, 8), ends_at: Time.utc(2099, 6, 22, 8, 30), status: "accepted")
+    refute_includes month.dates, "2099-06-22"
+    assert_equal %w[09:30], AppointmentSlots.new(service: other_service, date: "2099-06-22").slots.map { |slot| slot[:time] }
+    assert_includes AppointmentMonthAvailability.new(service: other_service, month: "2099-06").dates, "2099-06-23"
+  end
+
+  test "monthly dates honor future starts and daylight-saving gaps" do
+    @nutritionist.availability_windows.create!(weekday: 7, start_minute: 0, end_minute: 2 * 60)
+    @service.update!(duration_minutes: 30)
+    month = AppointmentMonthAvailability.new(service: @service, month: "2027-03", now: Time.utc(2026))
+    assert_includes month.dates, "2027-03-28"
+    assert_equal %w[00:00 00:30], AppointmentSlots.new(service: @service,
+      date: "2027-03-28", now: Time.utc(2026)).slots.map { |slot| slot[:time] }
+    assert_empty AppointmentMonthAvailability.new(service: @service, month: "2020-03").dates
+  end
+
+  test "monthly lookup reads windows and accepted intervals once" do
+    @nutritionist.availability_windows.create!(weekday: 1, start_minute: 9 * 60, end_minute: 12 * 60)
+    statements = []
+    subscriber = ActiveSupport::Notifications.subscribe("sql.active_record") do |*, payload|
+      statements << payload[:sql] if payload[:sql]&.match?(/FROM "(availability_windows|appointment_requests)"/)
+    end
+    AppointmentMonthAvailability.new(service: @service, month: "2099-06").dates
+    assert_equal 1, statements.count { |sql| sql.include?('FROM "availability_windows"') }
+    assert_equal 1, statements.count { |sql| sql.include?('FROM "appointment_requests"') }
+  ensure
+    ActiveSupport::Notifications.unsubscribe(subscriber) if subscriber
+  end
 end

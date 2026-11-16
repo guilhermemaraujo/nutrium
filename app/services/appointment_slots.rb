@@ -3,11 +3,13 @@ require "time"
 class AppointmentSlots
   class InvalidDate < StandardError; end
 
-  def initialize(service:, date:, now: Time.current)
+  def initialize(service:, date:, now: Time.current, windows: nil, accepted_requests: nil)
     @service = service
     @date = parse_date(date)
     @now = now
     @time_zone = TZInfo::Timezone.get(service.nutritionist.time_zone)
+    @windows = windows
+    @accepted_requests = accepted_requests
   end
 
   attr_reader :date
@@ -37,7 +39,9 @@ class AppointmentSlots
   end
 
   def slots
-    candidates = @service.nutritionist.availability_windows.where(weekday: date.cwday).flat_map do |window|
+    windows = @windows ? @windows.select { |window| window.weekday == date.cwday } :
+      @service.nutritionist.availability_windows.where(weekday: date.cwday)
+    candidates = windows.flat_map do |window|
       first_minute = ((window.start_minute + 29) / 30) * 30
       (first_minute...window.end_minute).step(30).filter_map do |minute|
         start, error = resolve(format("%02d:%02d", minute / 60, minute % 60))
@@ -59,7 +63,7 @@ class AppointmentSlots
 
     first_start = candidates.map { |slot| slot[:starts_at] }.min
     last_end = candidates.map { |slot| slot[:ends_at] }.max
-    accepted = @service.nutritionist.appointment_requests.accepted
+    accepted = @accepted_requests || @service.nutritionist.appointment_requests.accepted
       .where("starts_at < ? AND ends_at > ?", last_end, first_start).to_a
 
     candidates.reject do |slot|

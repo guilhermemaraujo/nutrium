@@ -20,7 +20,7 @@ describe("nutritionist card", () => {
 
     const card = screen.getByRole("article");
     within(card).getByRole("heading", { name: "Mary Jane" });
-    within(card).getByText("Dietitian · 2963N");
+    within(card).getByText("Dietitian · DEMO-REG-001");
     within(card).getByText("In-person appointment");
     within(card).getByText("Rua do Souto 12");
     within(card).getByText("Braga");
@@ -29,7 +29,9 @@ describe("nutritionist card", () => {
       name: "Service for Mary Jane",
     });
     expect(serviceSelect).toHaveProperty("value", "1");
-    within(serviceSelect).getByRole("option", { name: "Follow-up" });
+    within(serviceSelect).getByRole("option", {
+      name: "Follow-up · In person",
+    });
     within(card).getByText("€25.00 · 60 min");
     expect(
       within(card).getByRole("button", { name: "Schedule appointment" }),
@@ -40,7 +42,8 @@ describe("nutritionist card", () => {
   it("updates price, duration, and location when a service is selected", async () => {
     const user = userEvent.setup();
     const person = createMockNutritionists()[0];
-    person.services[1].address = "Rua de Santa Cruz 9";
+    person.services.find((service) => service.id === 2)!.address =
+      "Rua de Santa Cruz 9";
     const onBook = vi.fn();
     render(<NutritionistCard person={person} onBook={onBook} />);
 

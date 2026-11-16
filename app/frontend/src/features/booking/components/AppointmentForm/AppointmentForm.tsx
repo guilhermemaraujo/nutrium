@@ -6,7 +6,10 @@ import type {
   BookingField,
   BookingValues,
 } from "@/features/booking/bookingValidation";
+import type { useAvailableDates } from "@/features/booking/hooks/useAvailableDates";
+import type { useAvailableSlots } from "@/features/booking/hooks/useAvailableSlots";
 
+import { AvailabilityCalendar } from "./AvailabilityCalendar";
 import { FieldError } from "./FieldError";
 
 interface AppointmentFormProps {
@@ -15,6 +18,12 @@ interface AppointmentFormProps {
   errors: BookingErrors;
   message: string;
   submitting: boolean;
+  minDate: string;
+  month: string;
+  dates: ReturnType<typeof useAvailableDates>;
+  availability: ReturnType<typeof useAvailableSlots>;
+  onMonthChange: (month: string) => void;
+  onDateSelect: (date: string) => void;
   onChange: <K extends BookingField>(field: K, value: BookingValues[K]) => void;
   onSubmit: () => void;
 }
@@ -28,9 +37,20 @@ export function AppointmentForm({
   errors,
   message,
   submitting,
+  minDate,
+  month,
+  dates,
+  availability,
+  onMonthChange,
+  onDateSelect,
   onChange,
   onSubmit,
 }: AppointmentFormProps) {
+  const timeReady =
+    Boolean(values.date) &&
+    availability.status === "success" &&
+    availability.items.length > 0;
+
   function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     onSubmit();
@@ -60,7 +80,9 @@ export function AppointmentForm({
           >
             {person.services.map((service) => (
               <option key={service.id} value={service.id}>
-                {service.name} · €{(service.price_cents / 100).toFixed(2)} ·{" "}
+                {service.name} ·{" "}
+                {service.modality === "online" ? "Online" : "In person"} · €
+                {(service.price_cents / 100).toFixed(2)} ·{" "}
                 {service.duration_minutes} min
               </option>
             ))}
@@ -94,33 +116,74 @@ export function AppointmentForm({
           />
           <FieldError id="booking-email-error" message={errors.email} />
         </label>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <label className="block text-sm font-medium text-slate-700">
-            Date
-            <input
+        <div className="grid min-w-0 gap-4 sm:grid-cols-[224px_minmax(0,1fr)] sm:items-start">
+          <AvailabilityCalendar
+            timeZone={person.time_zone}
+            month={month}
+            minDate={minDate}
+            selectedDate={values.date}
+            availability={dates}
+            error={errors.date}
+            onMonthChange={onMonthChange}
+            onDateSelect={onDateSelect}
+          />
+          <div className="min-w-0 text-sm text-slate-700">
+            <label
+              htmlFor="booking-time"
+              className="inline-flex items-center gap-2 font-medium"
+            >
+              Available time
+              <span
+                aria-hidden="true"
+                className={`size-3.5 rounded-full border-2 border-[#9ddbd3] border-t-[#239a79] ${availability.status === "loading" ? "animate-spin" : "invisible"}`}
+              />
+            </label>
+            {availability.status === "loading" && (
+              <span role="status" className="sr-only">
+                Loading available times…
+              </span>
+            )}
+            <select
+              id="booking-time"
+              aria-busy={availability.status === "loading"}
               required
-              type="date"
-              value={values.date}
-              onChange={(event) => onChange("date", event.target.value)}
-              aria-invalid={!!errors.date}
-              aria-describedby={errors.date ? "booking-date-error" : undefined}
-              className={fieldClass}
-            />
-            <FieldError id="booking-date-error" message={errors.date} />
-          </label>
-          <label className="block text-sm font-medium text-slate-700">
-            Time
-            <input
-              required
-              type="time"
+              disabled={submitting || !timeReady}
               value={values.time}
               onChange={(event) => onChange("time", event.target.value)}
               aria-invalid={!!errors.time}
               aria-describedby={errors.time ? "booking-time-error" : undefined}
-              className={fieldClass}
-            />
+              className={`${fieldClass} ${!values.date ? "opacity-50" : !timeReady ? "opacity-60" : ""}`}
+            >
+              <option value="">
+                {values.date ? "Choose a time" : "Choose a date first"}
+              </option>
+              {availability.items.map((slot) => (
+                <option key={slot.starts_at} value={slot.time}>
+                  {slot.time}
+                </option>
+              ))}
+            </select>
             <FieldError id="booking-time-error" message={errors.time} />
-          </label>
+            {values.date &&
+              availability.status === "success" &&
+              availability.items.length === 0 && (
+                <p role="status" className="mt-2 text-slate-600">
+                  No available times on this date. Choose another date.
+                </p>
+              )}
+            {availability.status === "error" && (
+              <div role="alert" className="mt-2 text-red-800">
+                <p>Could not load available times.</p>
+                <button
+                  type="button"
+                  onClick={availability.retry}
+                  className="font-semibold underline"
+                >
+                  Retry times
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </fieldset>
       {message && (

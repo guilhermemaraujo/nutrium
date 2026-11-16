@@ -53,6 +53,32 @@ class AppointmentApiTest < ActionDispatch::IntegrationTest
     assert_equal "2099-06-22", body.dig("items", 0, "date")
   end
 
+  test "monthly available dates match daily slots and reject invalid query modes" do
+    get "/api/nutritionists/#{@nutritionist.id}/available_slots",
+      params: { service_id: @online.id, month: "2099-06" }
+    assert_response :success
+    body = response.parsed_body
+    assert_equal "Europe/Lisbon", body.fetch("time_zone")
+    assert_equal "2099-06", body.fetch("month")
+    assert_includes body.fetch("dates"), "2099-06-22"
+    refute_includes body.fetch("dates"), "2099-06-23"
+
+    get "/api/nutritionists/#{@nutritionist.id}/available_slots",
+      params: { service_id: @online.id, date: "2099-06-22", month: "2099-06" }
+    assert_response :unprocessable_entity
+    assert response.parsed_body.fetch("fields").key?("month")
+
+    get "/api/nutritionists/#{@nutritionist.id}/available_slots",
+      params: { service_id: @online.id, month: "2099-13" }
+    assert_response :unprocessable_entity
+    assert response.parsed_body.fetch("fields").key?("month")
+
+    get "/api/nutritionists/#{@nutritionist.id}/available_slots",
+      params: { service_id: @online.id }
+    assert_response :unprocessable_entity
+    assert response.parsed_body.fetch("fields").key?("date")
+  end
+
   test "booking, pending list, and decision use UUIDs and historical service snapshots" do
     post "/api/appointment_requests", params: {
       service_id: @online.id, guest: { name: "Alex Morgan", email: " ALEX@example.com " },

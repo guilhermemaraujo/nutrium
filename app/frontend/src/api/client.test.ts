@@ -45,7 +45,7 @@ describe("mock search API", () => {
     const request = await mock.createAppointmentRequest({
       service_id: 2,
       guest: { name: "Alex Guest", email: "Alex@Example.com" },
-      date: "2099-06-20",
+      date: "2099-06-22",
       time: "14:30",
     });
 
@@ -56,12 +56,12 @@ describe("mock search API", () => {
     expect(request.service.id).toBe(2);
     expect(request.service.modality).toBe("in_person");
     expect(request.guest.email).toBe("alex@example.com");
-    expect(request.starts_at).toBe("2099-06-20T13:30:00.000Z");
-    expect(request.ends_at).toBe("2099-06-20T14:00:00.000Z");
+    expect(request.starts_at).toBe("2099-06-22T13:30:00.000Z");
+    expect(request.ends_at).toBe("2099-06-22T14:00:00.000Z");
     const another = await mock.createAppointmentRequest({
       service_id: 2,
       guest: { name: "Another Guest", email: "another@example.com" },
-      date: "2099-06-21",
+      date: "2099-06-23",
       time: "14:30",
     });
     expect(another.id).not.toBe(request.id);
@@ -102,21 +102,14 @@ describe("mock requests API", () => {
     const mock = createMockApi(0);
     const acceptedId = (await mock.listAppointmentRequests(1)).items[0].id;
     await mock.decideAppointmentRequest(1, acceptedId, { decision: "accept" });
-    const conflicting = await mock.createAppointmentRequest({
-      service_id: 2,
-      guest: { name: "Late Guest", email: "late@example.com" },
-      date: "2099-06-20",
-      time: "10:30",
-    });
-
     await expect(
-      mock.decideAppointmentRequest(1, conflicting.id, { decision: "accept" }),
-    ).rejects.toThrow("conflicts with an accepted appointment");
-    expect(
-      (await mock.listAppointmentRequests(1)).items.some(
-        (request) => request.id === conflicting.id,
-      ),
-    ).toBe(true);
+      mock.createAppointmentRequest({
+        service_id: 2,
+        guest: { name: "Late Guest", email: "late@example.com" },
+        date: "2099-06-22",
+        time: "10:30",
+      }),
+    ).rejects.toThrow("Please correct the highlighted fields.");
     await expect(
       mock.decideAppointmentRequest(1, acceptedId, { decision: "reject" }),
     ).rejects.toThrow("no longer pending");
@@ -124,7 +117,7 @@ describe("mock requests API", () => {
     const adjacent = await mock.createAppointmentRequest({
       service_id: 2,
       guest: { name: "Adjacent Guest", email: "adjacent@example.com" },
-      date: "2099-06-20",
+      date: "2099-06-22",
       time: "11:00",
     });
     await expect(
@@ -153,6 +146,28 @@ describe("mock requests API", () => {
 });
 
 describe("mock availability API", () => {
+  it("reports only dates with daily slots for the selected service", async () => {
+    const mock = createMockApi(0);
+    const mary = await mock.listAvailableDates(1, 1, "2099-06");
+    expect(mary).toMatchObject({
+      time_zone: "Europe/Lisbon",
+      month: "2099-06",
+    });
+    expect(mary.dates).toContain("2099-06-22");
+    expect(mary.dates).not.toContain("2099-06-27");
+    for (const date of mary.dates) {
+      expect(
+        (await mock.listAvailableSlots(1, 1, date)).items.length,
+      ).toBeGreaterThan(0);
+    }
+    const sofia = await mock.listAvailableDates(5, 7, "2099-06");
+    expect(sofia.dates).toContain("2099-06-27");
+    await expect(
+      mock.listAvailableDates(1, 1, "2099-13"),
+    ).rejects.toMatchObject({
+      fields: { month: ["Choose a valid month."] },
+    });
+  });
   it("returns local half-hour starts and UTC instants without blocking pending requests", async () => {
     const mock = createMockApi(0);
     const result = await mock.listAvailableSlots(1, 1, "2099-06-22");
@@ -186,7 +201,7 @@ describe("mock availability API", () => {
     );
     expect(
       fortyFiveMinuteSlots.items.slice(0, 2).map((slot) => slot.time),
-    ).toEqual(["09:00", "09:30"]);
+    ).toEqual(["10:00", "10:30"]);
   });
 
   it("excludes accepted overlaps across services while keeping adjacent slots", async () => {
@@ -228,6 +243,25 @@ describe("mock availability API", () => {
 });
 
 describe("HTTP requests API", () => {
+  it("requests monthly dates through the existing availability endpoint", async () => {
+    const dates = {
+      time_zone: "Europe/Lisbon",
+      month: "2099-06",
+      dates: ["2099-06-22"],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => dates });
+    vi.stubGlobal("fetch", fetchMock);
+    const controller = new AbortController();
+    await expect(
+      httpApi.listAvailableDates(1, 3, "2099-06", controller.signal),
+    ).resolves.toEqual(dates);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/nutritionists/1/available_slots?service_id=3&month=2099-06",
+      { headers: { Accept: "application/json" }, signal: controller.signal },
+    );
+  });
   it("requests available slots with the service, local date, and abort signal", async () => {
     const slots = {
       time_zone: "Europe/Lisbon",

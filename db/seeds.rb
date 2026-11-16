@@ -39,13 +39,24 @@ services = service_rows.to_h do |key, nutritionist_key, name, modality, price_ce
   [ key, service ]
 end
 
-# Leave any existing schedule untouched; populate only professionals without one.
-nutritionists.each_value do |nutritionist|
+availability_rows = {
+  mary_jane: [ [ 1, 9 * 60, 12 * 60 ], [ 1, 14 * 60, 17 * 60 ], [ 2, 14 * 60, 18 * 60 ],
+    [ 3, 9 * 60, 12 * 60 ], [ 4, 13 * 60 + 30, 17 * 60 ], [ 5, 9 * 60, 13 * 60 ] ],
+  ana_costa: [ [ 1, 10 * 60, 14 * 60 ], [ 2, 13 * 60, 17 * 60 ], [ 3, 14 * 60, 18 * 60 ],
+    [ 5, 9 * 60, 12 * 60 ] ],
+  beatriz_silva: [ [ 1, 8 * 60, 12 * 60 ], [ 2, 10 * 60, 14 * 60 ],
+    [ 3, 8 * 60, 12 * 60 ], [ 3, 15 * 60, 18 * 60 ], [ 5, 9 * 60, 13 * 60 ] ],
+  joao_pereira: [ [ 1, 13 * 60, 18 * 60 ], [ 2, 8 * 60, 12 * 60 ],
+    [ 4, 9 * 60, 12 * 60 ], [ 4, 14 * 60, 18 * 60 ], [ 5, 9 * 60, 12 * 60 ] ],
+  sofia_martins: [ [ 1, 10 * 60, 15 * 60 ], [ 3, 11 * 60, 14 * 60 ],
+    [ 4, 15 * 60, 19 * 60 ], [ 6, 9 * 60, 13 * 60 ] ]
+}
+
+nutritionists.each do |key, nutritionist|
   next if nutritionist.availability_windows.exists?
 
-  (1..5).each do |weekday|
-    nutritionist.availability_windows.create!(weekday: weekday, start_minute: 9 * 60, end_minute: 12 * 60 + 30)
-    nutritionist.availability_windows.create!(weekday: weekday, start_minute: 13 * 60 + 30, end_minute: 17 * 60 + 30)
+  availability_rows.fetch(key).each do |weekday, start_minute, end_minute|
+    nutritionist.availability_windows.create!(weekday: weekday, start_minute: start_minute, end_minute: end_minute)
   end
 end
 
@@ -59,15 +70,34 @@ request_rows = [
 ]
 
 request_rows.each do |name, email, service_key, starts_at_text|
-  guest = Guest.find_or_create_by!(email: email) { |record| record.name = name }
-  next if guest.appointment_requests.exists?
+  guest = Guest.find_by(email: email)
+  next if guest&.appointment_requests&.exists?
 
   service = services.fetch(service_key)
   starts_at = Time.iso8601(starts_at_text)
+  local_start = starts_at.in_time_zone(service.nutritionist.time_zone)
+  next unless AppointmentSlots.new(service: service, date: local_start.to_date.iso8601)
+    .available?(local_start.strftime("%H:%M"))
+
+  guest ||= Guest.create!(name: name, email: email)
   AppointmentRequest.create!(
     guest: guest,
     service: service,
     starts_at: starts_at,
     ends_at: starts_at + service.duration_minutes.minutes
   )
+end
+
+accepted_email = "demo-accepted@example.com"
+unless Guest.exists?(email: accepted_email)
+  service = services.fetch(:mary_first_in_person)
+  starts_at = Time.iso8601("2099-06-22T14:00:00Z")
+  ends_at = starts_at + service.duration_minutes.minutes
+  local_start = starts_at.in_time_zone(service.nutritionist.time_zone)
+  if AppointmentSlots.new(service: service, date: local_start.to_date.iso8601)
+    .available?(local_start.strftime("%H:%M"))
+    guest = Guest.create!(name: "Taylor Demo", email: accepted_email)
+    AppointmentRequest.create!(guest: guest, service: service,
+      starts_at: starts_at, ends_at: ends_at, status: "accepted")
+  end
 end

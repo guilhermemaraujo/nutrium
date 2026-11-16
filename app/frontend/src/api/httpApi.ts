@@ -9,6 +9,7 @@ import type {
   ApiError,
   AppointmentRequest,
   AppointmentRequestListResponse,
+  AvailableDatesResponse,
   AvailableSlotsResponse,
   NutritionistOptionsResponse,
   SearchResponse,
@@ -24,6 +25,20 @@ async function readJson<T>(response: Response, fallback: string): Promise<T> {
 }
 
 export const httpApi: SearchApi & BookingApi & RequestsApi & AvailabilityApi = {
+  async listAvailableDates(nutritionistId, serviceId, month, signal) {
+    const params = new URLSearchParams({
+      service_id: String(serviceId),
+      month,
+    });
+    const response = await fetch(
+      `/api/nutritionists/${nutritionistId}/available_slots?${params}`,
+      { headers: { Accept: "application/json" }, signal },
+    );
+    return readJson<AvailableDatesResponse>(
+      response,
+      "Could not load available dates.",
+    );
+  },
   async listAvailableSlots(nutritionistId, serviceId, date, signal) {
     const params = new URLSearchParams({ service_id: String(serviceId), date });
     const response = await fetch(

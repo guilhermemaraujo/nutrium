@@ -97,7 +97,7 @@ export function AppointmentDialog({
       ) : (
         <>
           <p id="booking-description" className="mt-2 text-sm text-slate-600">
-            Choose a service and a future local time for {person.name} (
+            Choose a service and an available local time for {person.name} (
             {person.time_zone}).
           </p>
           <AppointmentForm
@@ -106,6 +106,12 @@ export function AppointmentDialog({
             errors={form.errors}
             message={form.message}
             submitting={form.status === "submitting"}
+            minDate={form.minDate}
+            month={form.month}
+            dates={form.dates}
+            availability={form.availability}
+            onMonthChange={form.changeMonth}
+            onDateSelect={form.selectDate}
             onChange={form.update}
             onSubmit={() => void form.submit()}
           />
